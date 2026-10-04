@@ -4,13 +4,6 @@
 frappe.query_reports["Average Performance per Stream"] = {
   filters: [
     {
-      fieldname: "school",
-      label: __("School"),
-      fieldtype: "Link",
-      options: "Company",
-      reqd: 1,
-    },
-    {
       fieldname: "academic_year",
       label: "Academic Year",
       fieldtype: "Link",

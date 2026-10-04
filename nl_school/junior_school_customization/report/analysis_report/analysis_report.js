@@ -4,13 +4,6 @@
 frappe.query_reports["Analysis Report"] = {
   filters: [
     {
-      fieldname: "company",
-      label: __("School"),
-      fieldtype: "Link",
-      options: "Company",
-      reqd: 1,
-    },
-    {
       fieldname: "academic_year",
       label: __("Academic Year"),
       fieldtype: "Link",

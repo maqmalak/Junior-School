@@ -105,8 +105,7 @@ def get_data(filters):
 
 def get_conditions(filters):
     conditions = []
-    if filters.get("company"):
-        conditions.append("company = %(company)s")
+    # Assessment Result has no company in education v16 (the old "School" filter could never run).
     if filters.get("academic_term"):
         conditions.append("academic_term = %(academic_term)s")
     return conditions

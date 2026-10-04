@@ -4,13 +4,6 @@
 frappe.query_reports["Most Improved Students"] = {
   filters: [
     {
-      fieldname: "company",
-      label: __("School"),
-      fieldtype: "Link",
-      options: "Company",
-      reqd: 1,
-    },
-    {
       fieldname: "current_year",
       label: __("Year"),
       fieldtype: "Link",

@@ -17,16 +17,9 @@ def execute(filters: dict | None = None):
 def get_columns() -> list[dict]:
     """Return columns for the report.
 
-    One field definition per column, just like a DocType field definition.
+    Education v16's Assessment Result / Plan carry no company, so this is per stream (student group).
     """
     return [
-        {
-            "label": "School",
-            "fieldname": "school",
-            "fieldtype": "Float",
-            "width": 150,
-            "precision": 2,
-        },
         {"label": "Stream", "fieldname": "stream", "fieldtype": "Data", "width": 200},
         {
             "label": "Average %",
@@ -39,12 +32,12 @@ def get_columns() -> list[dict]:
 
 
 def get_data(filters) -> list[list]:
+    filters = filters or {}
     conditions = get_conditions(filters)
 
     data = frappe.db.sql(
         """
         SELECT
-            ar.company AS school,
             ap.student_group AS stream,
             ROUND(AVG(ar.total_score / ar.maximum_score * 100), 1) AS average_percentage
         FROM
@@ -53,12 +46,13 @@ def get_data(filters) -> list[list]:
             `tabAssessment Plan` ap ON ap.name = ar.assessment_plan
         WHERE
             ar.total_score IS NOT NULL
-            AND ar.maximum_score IS NOT NULL
+            AND ar.maximum_score
+            AND ar.docstatus != 2
             {conditions}
         GROUP BY
-            ar.company, ap.student_group
+            ap.student_group
         ORDER BY
-            ar.company, ap.student_group
+            ap.student_group
     """.format(
             conditions=conditions
         ),
@@ -73,24 +67,14 @@ def get_chart(data):
     if not data:
         return None
 
-    schools = list(set(d.school for d in data))
-    datasets = []
-
-    for school in schools:
-        school_data = [d.average_percentage for d in data if d.school == school]
-        if school_data:
-            datasets.append({"name": school, "values": school_data})
-
-    chart = {
+    return {
         "data": {
             "labels": [d.stream for d in data],
-            "datasets": datasets,
+            "datasets": [{"name": _("Average %"), "values": [d.average_percentage for d in data]}],
         },
         "type": "bar",
-        "title": "Average Performance by Stream per School",
+        "title": _("Average Performance by Stream"),
     }
-
-    return chart
 
 
 def get_conditions(filters):
@@ -99,7 +83,5 @@ def get_conditions(filters):
         conditions += " AND ar.academic_year = %(academic_year)s"
     if filters.get("academic_term"):
         conditions += " AND ar.academic_term = %(academic_term)s"
-    if filters.get("company"):
-        conditions += " AND ar.company = %(company)s"
 
     return conditions

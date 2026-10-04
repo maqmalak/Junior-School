@@ -1,6 +1,9 @@
 # Copyright (c) 2025, Navari and contributors
 # For license information, please see license.txt
 
+from functools import reduce
+from operator import and_
+
 import frappe
 from frappe import _
 from frappe.query_builder import DocType
@@ -28,6 +31,7 @@ def get_columns() -> list[dict]:
 
 
 def get_data(filters) -> list[dict]:
+    filters = filters or {}
     AssessmentResult = DocType("Assessment Result")
     conditions = get_conditions(filters, AssessmentResult)
 
@@ -41,17 +45,24 @@ def get_data(filters) -> list[dict]:
             AssessmentResult.student_group.as_("stream"),
             percentage_expr.as_("average_percentage"),
         )
+        # Frappe v16's query builder takes one criterion per .where(): combine them with AND.
         .where(
-            AssessmentResult.total_score.isnotnull(),
-            AssessmentResult.maximum_score.isnotnull(),
-            AssessmentResult.maximum_score != 0,
-            *conditions,
+            reduce(
+                and_,
+                [
+                    AssessmentResult.total_score.isnotnull(),
+                    AssessmentResult.maximum_score.isnotnull(),
+                    AssessmentResult.maximum_score != 0,
+                    AssessmentResult.docstatus != 2,
+                    *conditions,
+                ],
+            )
         )
         .groupby(AssessmentResult.student_group)
         .orderby(AssessmentResult.student_group)
     )
 
-    results = frappe.qb.run(query)
+    results = query.run()
     return [{"stream": row[0], "average_percentage": row[1]} for row in results]
 
 
@@ -83,7 +94,5 @@ def get_conditions(filters, AssessmentResult):
         conditions.append(AssessmentResult.academic_year == filters["academic_year"])
     if filters.get("academic_term"):
         conditions.append(AssessmentResult.academic_term == filters["academic_term"])
-    if filters.get("school"):
-        conditions.append(AssessmentResult.company == filters["school"])
 
     return conditions

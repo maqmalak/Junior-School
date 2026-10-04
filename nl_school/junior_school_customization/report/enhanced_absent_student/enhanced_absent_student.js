@@ -4,24 +4,6 @@
 frappe.query_reports["Enhanced Absent Student"] = {
   filters: [
     {
-      fieldname: "company",
-      label: __("School"),
-      fieldtype: "Link",
-      options: "Company",
-      reqd: 1,
-      on_change: function (report) {
-        const company = report.get_filter_value("company");
-        report.set_filter_value("stream", "");
-        report.get_filter("stream").df.get_query = function () {
-          return {
-            filters: {
-              company: company,
-            },
-          };
-        };
-      },
-    },
-    {
       fieldname: "from_date",
       label: __("From Date"),
       fieldtype: "Date",

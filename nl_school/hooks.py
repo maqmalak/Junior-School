@@ -1,11 +1,12 @@
 app_name = "nl_school"
-app_title = "Scholarship Management"
+app_title = "Junior School"
 app_publisher = "Navari"
 app_description = "Scholarship Management"
 app_email = "mania@navari.co.ke"
 app_license = "agpl-3.0"
 app_logo_url = "/assets/nl_school/images/junior-school.svg"
-app_home = "/desk/scholarship"
+# The app ships the "Junior School" workspace; "/desk/scholarship" pointed at a workspace that doesn't exist.
+app_home = "/desk/junior-school"
 
 # Apps
 # ------------------

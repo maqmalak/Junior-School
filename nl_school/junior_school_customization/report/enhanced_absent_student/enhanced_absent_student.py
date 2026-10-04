@@ -17,13 +17,10 @@ def execute(filters=None):
 
     from_date = filters.get("from_date")
     to_date = filters.get("to_date")
-    company = filters.get("company")
     stream = filters.get("stream")
 
     if not from_date or not to_date:
         msgprint(_("Please select both From Date and To Date"), raise_exception=1)
-    if not company:
-        msgprint(_("Please select a School"), raise_exception=1)
 
     columns = get_columns()
     data = []
@@ -36,7 +33,7 @@ def execute(filters=None):
             current_date = add_days(current_date, 1)
             continue
 
-        absent_students = get_absent_students(current_date, company, stream)
+        absent_students = get_absent_students(current_date, stream)
 
         leave_applicants = get_leave_applications(current_date)
 
@@ -46,7 +43,7 @@ def execute(filters=None):
                     student.student,
                     student.student_name,
                     student.student_group,
-                    student.custom_shift or "",
+                    student.get("custom_shift") or "",
                     student.date,
                 ]
 
@@ -79,7 +76,8 @@ def get_columns():
     ]
 
 
-def get_absent_students(date, company, stream=None):
+def get_absent_students(date, stream=None):
+    # Education v16's Student Attendance has no company, and custom_shift only exists where a site added it.
     StudentAttendance = DocType("Student Attendance")
     query = (
         frappe.qb.from_(StudentAttendance)
@@ -87,14 +85,12 @@ def get_absent_students(date, company, stream=None):
             StudentAttendance.student,
             StudentAttendance.student_name,
             StudentAttendance.student_group,
-            StudentAttendance.custom_shift,
             StudentAttendance.date,
         )
         .where(
             (StudentAttendance.status == "Absent")
             & (StudentAttendance.docstatus == 1)
-            & (StudentAttendance.date >= date)
-            & (StudentAttendance.company == company)
+            & (StudentAttendance.date == date)
         )
     )
     if stream:

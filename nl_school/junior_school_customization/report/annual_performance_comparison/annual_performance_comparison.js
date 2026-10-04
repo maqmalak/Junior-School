@@ -3,13 +3,6 @@
 frappe.query_reports["Annual Performance Comparison"] = {
   filters: [
     {
-      fieldname: "company",
-      label: __("School"),
-      fieldtype: "Link",
-      options: "Company",
-      reqd: 1,
-    },
-    {
       fieldname: "current_year",
       label: __("Current Year"),
       fieldtype: "Link",

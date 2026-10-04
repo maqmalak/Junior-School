@@ -17,12 +17,5 @@ frappe.query_reports['Average Performance per Stream Chart'] = {
       options: 'Academic Term',
       reqd: 0,
     },
-    {
-      fieldname: 'company',
-      label: 'School',
-      fieldtype: 'Link',
-      options: 'Company',
-      reqd: 0,
-    },
   ],
 }

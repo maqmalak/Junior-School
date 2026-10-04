@@ -1,10 +1,18 @@
 # Copyright (c) 2025, Navari and contributors
 # For license information, please see license.txt
 
+from functools import reduce
+from operator import and_
+
 import frappe
 from frappe.query_builder import DocType
 from frappe.query_builder.functions import Count
 from frappe import _
+
+
+def _all(*criteria):
+    """Frappe v16's query builder takes one criterion per .where(): combine them with AND."""
+    return reduce(and_, criteria)
 
 
 def execute(filters=None):
@@ -28,7 +36,7 @@ def get_columns():
         .orderby(AssessmentResult.course)
     )
 
-    subjects = frappe.qb.run(subject_query)
+    subjects = subject_query.run()
 
     for subject_row in subjects:
         course_name = subject_row[0]
@@ -62,21 +70,21 @@ def get_data(filters):
     grade_query = (
         frappe.qb.from_(AssessmentResult)
         .select(AssessmentResult.grade)
-        .where(AssessmentResult.grade.isnotnull(), *conditions)
+        .where(_all(AssessmentResult.grade.isnotnull(), *conditions))
         .distinct()
         .orderby(AssessmentResult.grade)
     )
 
-    grades = frappe.qb.run(grade_query)
+    grades = grade_query.run()
 
     subject_query = (
         frappe.qb.from_(AssessmentResult)
         .select(AssessmentResult.course)
-        .where(AssessmentResult.course.isnotnull(), *conditions)
+        .where(_all(AssessmentResult.course.isnotnull(), *conditions))
         .distinct()
         .orderby(AssessmentResult.course)
     )
-    subjects = frappe.qb.run(subject_query)
+    subjects = subject_query.run()
 
     for grade_row in grades:
         grade = grade_row[0]
@@ -90,22 +98,24 @@ def get_data(filters):
                 frappe.qb.from_(AssessmentResult)
                 .select(Count("*").as_("count"))
                 .where(
-                    AssessmentResult.grade == grade,
-                    AssessmentResult.course == course_name,
-                    *conditions,
+                    _all(
+                        AssessmentResult.grade == grade,
+                        AssessmentResult.course == course_name,
+                        *conditions,
+                    )
                 )
             )
 
-            subject_count = frappe.qb.run(subject_count_query)[0][0] or 0
+            subject_count = subject_count_query.run()[0][0] or 0
             row[fieldname] = subject_count
 
         total_query = (
             frappe.qb.from_(AssessmentResult)
             .select(Count("*").as_("count"))
-            .where(AssessmentResult.grade == grade, *conditions)
+            .where(_all(AssessmentResult.grade == grade, *conditions))
         )
 
-        total_count = frappe.qb.run(total_query)[0][0] or 0
+        total_count = total_query.run()[0][0] or 0
         row["total_learners"] = total_count
 
         data.append(row)
@@ -118,8 +128,6 @@ def get_conditions(filters, AssessmentResult):
     conditions = []
 
     if filters:
-        if filters.get("company"):
-            conditions.append(AssessmentResult.company == filters["company"])
         if filters.get("academic_year"):
             conditions.append(
                 AssessmentResult.academic_year == filters["academic_year"]
