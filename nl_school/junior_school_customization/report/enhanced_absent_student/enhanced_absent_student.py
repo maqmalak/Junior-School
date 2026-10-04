@@ -25,11 +25,21 @@ def execute(filters=None):
     columns = get_columns()
     data = []
 
-    holiday_list = get_holiday_list()
+    # A new school has no default Holiday List yet: count every day instead of refusing to run.
+    try:
+        holiday_list = get_holiday_list()
+    except frappe.ValidationError:
+        frappe.clear_messages()
+        holiday_list = None
+        frappe.msgprint(
+            _("No default Holiday List is set for the company, so holidays are not skipped."),
+            indicator="orange",
+            alert=True,
+        )
     current_date = getdate(from_date)
 
     while current_date <= getdate(to_date):
-        if is_holiday(holiday_list, current_date):
+        if holiday_list and is_holiday(holiday_list, current_date):
             current_date = add_days(current_date, 1)
             continue
 
